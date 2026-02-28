@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Txt2mp4 资源索引</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }
+        h1 { margin: 0; padding: 24px; font-size: 1.5rem; color: #333; border-bottom: 1px solid #eee; }
+        .main { display: flex; }
+        .tabs { display: flex; flex-direction: column; width: 140px; flex-shrink: 0; border-right: 1px solid #ddd; background: #fafafa; }
+        .tab { padding: 14px 20px; cursor: pointer; font-size: 0.95rem; color: #666; border-left: 3px solid transparent; }
+        .tab:hover { color: #333; }
+        .tab.active { color: #d86608; font-weight: 600; border-left-color: #d86608; background: #fff; }
+        .content { flex: 1; min-width: 0; }
+        .panel { display: none; padding: 0; min-height: 200px; }
+        .panel.active { display: block; }
+        .sub-tabs { display: flex; justify-content: flex-start; border-bottom: 1px solid #ddd; background: #f9f9f9; padding: 0 16px; }
+        .sub-tab { padding: 12px 20px; cursor: pointer; font-size: 0.9rem; color: #666; border-bottom: 3px solid transparent; }
+        .sub-tab:hover { color: #333; }
+        .sub-tab.active { color: #d86608; font-weight: 600; border-bottom-color: #d86608; background: #fff; }
+        .sub-panel { display: none; padding: 24px; }
+        .sub-panel.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        tr { border-bottom: 1px solid #eee; }
+        tr:hover { background: #fafafa; }
+        td { padding: 12px 0; }
+        td:first-child { text-align: left; }
+        td.file-time { text-align: right; white-space: nowrap; color: #888; font-size: 0.9rem; }
+        a { color: #d86608; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .na { color: #999; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Txt2mp4 资源索引</h1>
+        <div class="main">
+            <div class="tabs">
+                <div class="tab active" data-tab="mp4">播放页 HTML</div>
+                <div class="tab" data-tab="pic">排版 HTML</div>
+                <div class="tab" data-tab="vocab">词汇 MD</div>
+            </div>
+            <div class="content">
+                <div class="panel" id="panel-vocab">
+                    <div class="sub-tabs">
+                        {% for cat in categories %}
+                        <div class="sub-tab {% if loop.first %}active{% endif %}" data-category="{{ cat.id }}">{{ cat.label }}</div>
+                        {% endfor %}
+                    </div>
+                    {% for cat in categories %}
+                    <div class="sub-panel {% if loop.first %}active{% endif %}" data-panel="vocab" data-category="{{ cat.id }}">
+                        <table><tbody>
+                            {% for r in cat.resources %}
+                            <tr><td>{% if r.vocab_url %}<a href="{{ r.vocab_url }}" target="_blank">{{ r.name }}</a>{% else %}<span class="na">—</span>{% endif %}</td><td class="file-time">{{ r.mtime_str or '' }}</td></tr>
+                            {% endfor %}
+                        </tbody></table>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="panel" id="panel-pic">
+                    <div class="sub-tabs">
+                        {% for cat in categories %}
+                        <div class="sub-tab {% if loop.first %}active{% endif %}" data-category="{{ cat.id }}">{{ cat.label }}</div>
+                        {% endfor %}
+                    </div>
+                    {% for cat in categories %}
+                    <div class="sub-panel {% if loop.first %}active{% endif %}" data-panel="pic" data-category="{{ cat.id }}">
+                        <table><tbody>
+                            {% for r in cat.resources %}
+                            <tr><td>{% if r.pic_url %}<a href="{{ r.pic_url }}" target="_blank">{{ r.name }}</a>{% else %}<span class="na">—</span>{% endif %}</td><td class="file-time">{{ r.mtime_str or '' }}</td></tr>
+                            {% endfor %}
+                        </tbody></table>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="panel active" id="panel-mp4">
+                    <div class="sub-tabs">
+                        {% for cat in categories %}
+                        <div class="sub-tab {% if loop.first %}active{% endif %}" data-category="{{ cat.id }}">{{ cat.label }}</div>
+                        {% endfor %}
+                    </div>
+                    {% for cat in categories %}
+                    <div class="sub-panel {% if loop.first %}active{% endif %}" data-panel="mp4" data-category="{{ cat.id }}">
+                        <table><tbody>
+                            {% for r in cat.resources %}
+                            <tr><td>{% if r.mp4_url %}<a href="{{ r.mp4_url }}" target="_blank">{{ r.name }}</a>{% else %}<span class="na">—</span>{% endif %}</td><td class="file-time">{{ r.mtime_str or '' }}</td></tr>
+                            {% endfor %}
+                        </tbody></table>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.tab').forEach(t => {
+            t.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+            });
+        });
+        document.querySelectorAll('.sub-tab').forEach(st => {
+            st.addEventListener('click', () => {
+                const panel = st.closest('.panel');
+                panel.querySelectorAll('.sub-tab').forEach(x => x.classList.remove('active'));
+                panel.querySelectorAll('.sub-panel').forEach(x => x.classList.remove('active'));
+                st.classList.add('active');
+                panel.querySelector('.sub-panel[data-category="' + st.dataset.category + '"]').classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

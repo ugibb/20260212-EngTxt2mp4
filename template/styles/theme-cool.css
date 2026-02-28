@@ -1,0 +1,43 @@
+/* 主题2：冷色系（蓝调） */
+body.theme-cool {
+  --body-bg: linear-gradient(165deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
+  --canvas-bg: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 30%, #bae6fd 70%, #7dd3fc 100%);
+  --canvas-shadow: 0 24px 64px rgba(2, 132, 199, 0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+  --header-bg: linear-gradient(180deg, #0c4a6e 0%, #075985 100%);
+  --header-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1) inset;
+  --header-title-color: #e0f2fe;
+  --header-sub-color: #bae6fd;
+  --header-level-bg: linear-gradient(90deg, #0e7490 0%, #0891b2 100%);
+  --header-level-color: #e0f2fe;
+  --tag-bg: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  --tag-border: 2px solid rgba(255,255,255,0.5);
+  --tag-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+  --word-num-bg: #e0f2fe;
+  --word-num-color: #0369a1;
+  --category-active-bg: #0284c7;
+  --category-active-color: #fff;
+  --category-active-shadow: 0 2px 6px rgba(2, 132, 199, 0.5);
+  --unread-opacity: 0.5;
+  --unread-filter: grayscale(0.3);
+  --unread-word-color: #64748b;
+  --unread-word-border: 2px dashed #94a3b8;
+  --current-bg: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  --current-border: 2px solid #38bdf8;
+  --current-border-color: #38bdf8;
+  --current-shadow: 0 4px 16px rgba(2, 132, 199, 0.5);
+  --current-shadow-hover: 0 4px 24px rgba(2, 132, 199, 0.6), 0 0 0 2px rgba(56, 189, 248, 0.3);
+  --read-word-color: #0d9488;
+  --read-word-border: 3px solid #14b8a6;
+  --read-word-bg: linear-gradient(180deg, transparent 60%, rgba(20, 184, 166, 0.1) 100%);
+  --translation-bg: rgba(224, 242, 254, 0.6);
+  --translation-border: 1px solid rgba(186, 230, 253, 0.7);
+  --translation-color: #475569;
+  --translation-shadow: none;
+  --play-btn-bg: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  --play-btn-border: 2px solid rgba(255,255,255,0.5);
+  --play-btn-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+  --play-btn-hover-bg: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  --footer-bg: linear-gradient(90deg, #0c4a6e 0%, #075985 100%);
+  --footer-border: 2px solid #38bdf8;
+  --footer-color: #bae6fd;
+}

@@ -1,0 +1,21 @@
+# 需求约定：以下不同步至 GitHub
+00-req/
+doc/
+input/
+log/
+output/
+.env
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# IDE / OS
+.DS_Store
+.idea/
+*.swp
+*.swo

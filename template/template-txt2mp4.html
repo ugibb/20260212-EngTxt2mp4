@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>{{ARTICLE_TITLE}}</title>
+<!-- 样式切换：按键盘 1、2、3、4 切换 style1~4；URL ?style=2 指定默认样式；样式统一从 template/styles/ 加载，无需拷贝到 output -->
+<link rel="stylesheet" href="../../../template/styles/style{{STYLE_INDEX}}.css" id="styleSheet">
+</head>
+
+<body>
+
+<div class="canvas">
+
+  <div class="header-wrapper">
+    <div class="header-top-row">
+      <div class="header-main">
+        <span class="header-tag">{{MATERIAL_TYPE_SHORT_LABEL}}</span>
+        <div class="header-title">全球英语头条 高效积累8000词</div>
+        <div class="header-sub">时报阅读 / 发音纯正 / 用词精彩 / 表达流畅 /</div>
+      </div>
+      <div class="audio-scan paused" id="playBtn" title="点击播放">
+        <div class="icon-hint">▶</div>
+        <div class="play-label">播放</div>
+      </div>
+    </div>
+
+    <div class="header-level">
+      <span class="header-level-left">日期：<span class="word-num">{{DATE}}</span></span>
+      <span class="header-level-center">
+        <span class="categories">
+          <span>初中</span><span class="sep">|</span>
+          <span>高中</span><span class="sep">|</span>
+          <span>大学</span><span class="sep">|</span>
+          <span>考研</span><span class="sep">|</span>
+          <span class="active">雅思/托福</span>
+        </span>
+      </span>
+      <span class="header-level-right">
+        <span class="header-level-left">词汇数：<span class="word-num" id="vocabCount">{{VOCAB_COUNT}}个</span></span>
+        <span class="header-level-left">词组数：<span class="word-num" id="phraseCount">{{PHRASE_COUNT}}个</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="left">
+      <div class="article" id="article"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Global English News
+  </div>
+
+</div>
+
+<audio id="audio" src="{{AUDIO_URL}}" style="display:none"></audio>
+
+<script>
+(function() {
+  const STYLE_COUNT = 4;
+  function getStyleIndex() {
+    const m = /[?&]style=(\d+)/.exec(location.search);
+    return m ? Math.min(Math.max(1, parseInt(m[1], 10)), STYLE_COUNT) : {{STYLE_INDEX}};
+  }
+  function setStyle(n) {
+    n = Math.min(Math.max(1, n), STYLE_COUNT);
+    var link = document.getElementById('styleSheet');
+    if (link) link.href = '../../../template/styles/style' + n + '.css';
+    return n;
+  }
+  setStyle(getStyleIndex());
+  document.addEventListener('keydown', function(e) {
+    if (e.key >= '1' && e.key <= '4') setStyle(parseInt(e.key, 10));
+  });
+
+  const LRC_DATA = {{LRC_DATA}};
+  const VOCABULARY = {{VOCABULARY_JSON}};
+  const SENTENCES = {{SENTENCES_JSON}};
+  const TRANSLATIONS = {{TRANSLATIONS_JSON}};
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('playBtn');
+  const articleEl = document.getElementById('article');
+
+  function getWordInfo(text) {
+    // 去除词尾「空格+标点」，便于匹配词汇表音标和词义（JSON 中标点前有空格）
+    const w = (text || '').toLowerCase().replace(/\s+[.,!?;:'"]+$/, '').trim();
+    for (const [, v] of Object.entries(VOCABULARY)) {
+      const vw = (v.w || '').toLowerCase();
+      // 完整单词匹配：精确相等，或词条为 "word (base)" 时首词匹配
+      const vwBase = (vw.split(/[\s(]/)[0] || '').toLowerCase();
+      if (vw === w || vwBase === w) return v;
+    }
+    return { phonetic: '', meaning: '' };
+  }
+
+  function buildArticle() {
+    const frag = document.createDocumentFragment();
+    let lastSentIndex = -1;
+
+    for (let i = 0; i < LRC_DATA.length; i++) {
+      const entry = LRC_DATA[i];
+      // 统一从 output/02-vocabulary/{文件名}.md 的 VOCABULARY 查找音标、文中词义
+      const info = getWordInfo(entry.text);
+      const pron = (info.phonetic || '').trim() ? info.phonetic : ' ';
+      const cn = (info.meaning || '').trim() ? info.meaning : ' ';
+      const pronCls = '';
+      const cnCls = '';
+
+      if (entry.sentIndex !== lastSentIndex && lastSentIndex >= 0) {
+        const trans = document.createElement('div');
+        trans.className = 'translation';
+        trans.textContent = TRANSLATIONS[lastSentIndex] || '';
+        frag.appendChild(trans);
+      }
+      lastSentIndex = entry.sentIndex;
+
+      const span = document.createElement('span');
+      span.className = 'phrase-wrap';
+      span.dataset.index = i;
+      span.innerHTML = '<span class="pron-inline' + pronCls + '">' + (pron || ' ') + '</span>' +
+        '<span class="word-plain">' + entry.text + '</span>' +
+        '<span class="inline-cn' + cnCls + '">' + (cn || ' ') + '</span>';
+      frag.appendChild(span);
+      if (LRC_DATA[i + 1]) frag.appendChild(document.createTextNode(' '));
+    }
+    if (lastSentIndex >= 0 && TRANSLATIONS[lastSentIndex]) {
+      const trans = document.createElement('div');
+      trans.className = 'translation';
+      trans.textContent = TRANSLATIONS[lastSentIndex];
+      frag.appendChild(trans);
+    }
+
+    articleEl.innerHTML = '';
+    articleEl.appendChild(frag);
+  }
+
+  function buildSidebar() {
+    const vocabKeys = Object.keys(VOCABULARY).filter(k => !/\s/.test(k));
+    const phraseKeys = Object.keys(VOCABULARY).filter(k => /\s/.test(k));
+
+    const vocabSection = document.getElementById('vocabSection');
+    const phrasesSection = document.getElementById('phrasesSection');
+
+    if (vocabKeys.length > 0) {
+      vocabSection.innerHTML = '<div class="vocab-title">词汇</div>' +
+        vocabKeys.slice(0, 15).map(k => {
+          const v = VOCABULARY[k];
+          return '<div class="vocab-item"><strong>' + v.w + '</strong>' +
+            (v.phonetic ? '<div class="pron">' + v.phonetic + '</div>' : '') +
+            (v.meaning ? '<div>' + v.meaning + '</div>' : '') + '</div>';
+        }).join('');
+    } else {
+      vocabSection.innerHTML = '';
+    }
+
+    if (phraseKeys.length > 0) {
+      phrasesSection.innerHTML = '<div class="phrases-title">词组</div>' +
+        phraseKeys.slice(0, 10).map(k => {
+          const v = VOCABULARY[k];
+          return '<div class="phrase-item"><div class="en">' + v.w + '</div>' +
+            (v.meaning ? '<div class="cn">' + v.meaning + '</div>' : '') + '</div>';
+        }).join('');
+    } else {
+      phrasesSection.innerHTML = '';
+    }
+  }
+
+  function updateHighlight(time) {
+    let currentIndex = -1;
+    for (let i = 0; i < LRC_DATA.length; i++) {
+      if (time >= LRC_DATA[i].start) currentIndex = i;
+    }
+
+    document.querySelectorAll('.phrase-wrap').forEach((el) => {
+      const idx = parseInt(el.dataset.index, 10);
+      el.classList.remove('read', 'current');
+
+      const wordSpan = el.querySelector('.word-plain, .hl-dark');
+
+      if (idx < currentIndex) {
+        el.classList.add('read');
+        if (wordSpan) {
+          wordSpan.classList.remove('hl-dark');
+          wordSpan.classList.add('word-plain');
+          wordSpan.textContent = LRC_DATA[idx].text;
+        }
+      } else if (idx === currentIndex) {
+        el.classList.add('current');
+        if (wordSpan) {
+          wordSpan.classList.remove('word-plain');
+          wordSpan.classList.add('hl-dark');
+          wordSpan.textContent = LRC_DATA[idx].text;
+        }
+      } else {
+        if (wordSpan) {
+          wordSpan.classList.remove('hl-dark');
+          wordSpan.classList.add('word-plain');
+          wordSpan.textContent = LRC_DATA[idx].text;
+        }
+      }
+    });
+
+    const cur = document.querySelector('.phrase-wrap.current');
+    if (cur) cur.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  playBtn.addEventListener('click', function() {
+    if (audio.paused) {
+      audio.play();
+      playBtn.classList.remove('paused');
+      playBtn.querySelector('.icon-hint').textContent = '⏸';
+      playBtn.querySelector('.play-label').textContent = '暂停';
+    } else {
+      audio.pause();
+      playBtn.classList.add('paused');
+      playBtn.querySelector('.icon-hint').textContent = '▶';
+      playBtn.querySelector('.play-label').textContent = '播放';
+    }
+  });
+
+  audio.addEventListener('timeupdate', () => updateHighlight(audio.currentTime));
+  audio.addEventListener('ended', () => {
+    playBtn.classList.add('paused');
+    playBtn.querySelector('.icon-hint').textContent = '▶';
+    playBtn.querySelector('.play-label').textContent = '播放';
+  });
+
+  buildArticle();
+  buildSidebar();
+})();
+</script>
+</body>
+</html>

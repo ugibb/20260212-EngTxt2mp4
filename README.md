@@ -121,6 +121,11 @@ python src/step7_generate_resource_page.py
 
 ## 更新记录
 
+### 2026-02-28
+
+- **文档**：01-git.md 精简为三步流程（先更新 README、提交到 GitHub、禁止同步），并执行提交与推送。
+- **仓库与文档**：初始化 Git 仓库，配置 .gitignore，按 01-git.md 完成首次提交并推送到 GitHub 远程仓库（https://github.com/ugibb/20260212-EngTxt2mp4）。
+
 ### 2026-02-23
 
 - **Step2 词汇提取**：LLM 输出因 token 限制截断导致 MD 无「段落结构」时，用 01-txt 的段落信息自动补全并追加，避免 Step3 报「MD 无段落结构」跳过；新增 `_build_paragraph_section`、扩展 `_ensure_paragraph_structure`；已存在 MD 再次运行 Step2 时会通过 `_fix_existing_md_paragraph_structure` 自动补全。
@@ -159,3 +164,4 @@ python src/step7_generate_resource_page.py
 - [x] 9、「Run_all」增加执行全部input文件夹下所有日期的文件
 - [ ] 9、资料类型更新为文章类型，文章类型与资料名称不做直接关联，主要针对雅思高频内容，直接由LLM 根据文章内容来确定文章类型，主要由以下六类问这个类型：1️⃣ 教育 2️⃣ 科技 3️⃣ 环境 4️⃣ 社会 5️⃣ 经济 6️⃣ 文化
 - [ ] 10、新增MP32MP4功能，下载MP3 格式的音频文件，一键输出标准化后的雅思学习资料。
+- [ ] 11、词汇库本地化（参考百度翻译）

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-统一执行全流程：step1 -> step2 -> step3 -> step4 -> step5 -> step6 -> step7
+统一执行全流程：step1 -> step2 -> step3 -> step4（含 v2）-> step5 -> step6 -> step7
 支持按指定步骤执行，默认全部执行。
 
 用法：
@@ -28,11 +28,12 @@ from src.utils.logger import setup_logger, SEP_DOUBLE
 logger = setup_logger("run_all")
 
 # 步骤 6 为 step7_generate_resource_page，每次运行都会自动加入，保证 resources.html 包含全部资源链接
-STEPS: dict[int, tuple[str, str]] = {
+# 步骤 4 统一为「排版 HTML」：依次执行 step4、step4_1（v2）
+STEPS: dict[int, tuple[str, str | list[str]]] = {
     1: ("文本预处理  >>>>>>>>>", "step1_format_text"),
     2: ("调用 LLM 生成词汇 >>>", "step2_extract_vocab"),
     3: ("TTS 音频+时间戳生成 >", "step3_generate_tts"),
-    4: ("排版 HTML 生成 >>>>>", "step4_generate_pic_html"),
+    4: ("排版 HTML 生成 >>>>>", ["step4_generate_pic_html", "step4_1_generate_pic_html"]),
     5: ("TTS 播放页 HTML 生成 ", "step5_generate_mp4_html"),
     6: ("全局资源展示页面生成 >>", "step7_generate_resource_page"),
     7: ("视频录制导出 MP4 >>>>>", "step6_record_video"),
@@ -41,13 +42,15 @@ STEP_ALWAYS_RUN: int = 6  # 每次执行都运行 step7，刷新 resources.html
 
 
 def _run_step(step_num: int, reload_step: bool = False) -> None:
-    """动态导入并执行指定步骤。reload_step=True 时先 reload 该模块再执行，以便读到最新 config（用于 --all 逐日）"""
+    """动态导入并执行指定步骤；步骤 4 为多模块时依次执行。reload_step=True 时先 reload 再执行（用于 --all 逐日）"""
     import importlib
-    module_name = STEPS[step_num][1]
-    mod = importlib.import_module(f"src.{module_name}")
-    if reload_step:
-        importlib.reload(mod)
-    mod.main()
+    name, mod_or_list = STEPS[step_num]
+    modules = [mod_or_list] if isinstance(mod_or_list, str) else mod_or_list
+    for module_name in modules:
+        mod = importlib.import_module(f"src.{module_name}")
+        if reload_step:
+            importlib.reload(mod)
+        mod.main()
 
 
 def _parse_args() -> tuple[list[int], str | None, bool, str | None]:
@@ -72,7 +75,7 @@ def _parse_args() -> tuple[list[int], str | None, bool, str | None]:
         dest="date",
         type=str,
         metavar="YYYYMMDD",
-        help="运行日期目录，如 20260220；默认使用 .env 的 RUN_DATE 或当天",
+        help="运行日期目录，如 20260220；默认使用 .env 的 RUN_DATE 或 input 下最大日期文件夹",
     )
     parser.add_argument(
         "-a", "--all",

@@ -70,13 +70,26 @@ VIDEO_HEIGHT: int = 1920
 
 
 # 录屏 MP4 音画同步微调（秒）：裁剪视频开头时加上该偏移。统一在 config.py 中配置，无需 .env。
-# 若出现「音频晚于字幕」（字幕先出、声音后到），设为负值如 -0.2 少裁视频以对齐；若「字幕晚于音频」则设正值。
-VIDEO_TRIM_SYNC_OFFSET: float = 0.0
-# 仅对 EIM_ 前缀素材的录屏做额外 trim 微调（秒）；该类页面易出现「音频晚于字幕」，默认 -0.2 少裁视频。
-VIDEO_TRIM_SYNC_OFFSET_EIM: float = -0.2
+# 「音频晚于字幕」= 字幕先出、声音后到 → 设负值（如 -0.2）少裁视频，使画面/字幕后移以对齐音频。
+# 「字幕晚于音频」= 声音先出、字幕后到 → 设正值多裁视频，使画面前移以对齐音频。
+VIDEO_TRIM_SYNC_OFFSET: float = 0.6
+# EIM_ 前缀素材的录屏「音频晚于字幕」更明显，单独做额外 trim（秒）；负值少裁、与上同逻辑，默认 -0.2。
+VIDEO_TRIM_SYNC_OFFSET_EIM: float = -0.8
 
 # 运行日期（用于 input/YYYYMMDD、output/YYYYMMDD 子目录；可从 .env 的 RUN_DATE 或 run_all.py --date 传入）
-RUN_DATE: str = (os.getenv("RUN_DATE") or date.today().strftime("%Y%m%d")).strip()
+# 未指定时默认使用 input 下最大的日期文件夹名（非系统时间）
+def _get_default_run_date() -> str:
+    input_base = PROJECT_ROOT / "input"
+    if not input_base.exists():
+        return date.today().strftime("%Y%m%d")
+    date_pattern = re.compile(r"^\d{8}$")
+    dirs = [d.name for d in input_base.iterdir() if d.is_dir() and date_pattern.match(d.name)]
+    if not dirs:
+        return date.today().strftime("%Y%m%d")
+    return max(dirs)
+
+
+RUN_DATE: str = (os.getenv("RUN_DATE") or _get_default_run_date()).strip()
 
 # 仅处理指定文件（run_all -f 传入；为 input 目录下文件名或 stem，如 "IELT50_Day02：A Forest Exploration.txt" 或 "IELT50_Day02：A Forest Exploration"）
 RUN_SINGLE_FILE: str = (os.getenv("RUN_SINGLE_FILE") or "").strip()
@@ -104,6 +117,7 @@ OUTPUT_GLOBAL_RESOURCE_INDEX: Path = OUTPUT_BASE / "resources.html"
 
 # 模板文件
 TEMPLATE_FILE: Path = TEMPLATE_DIR / "template-txt2pic.html"
+TEMPLATE_FILE_V2: Path = TEMPLATE_DIR / "template-txt2pic-v2.html"
 TEMPLATE_TXT2MP4_FILE: Path = TEMPLATE_DIR / "template-txt2mp4.html"
 TEMPLATE_RESOURCE_INDEX: Path = TEMPLATE_DIR / "resource-index.html"
 TEMPLATE_STYLES_DIR: Path = TEMPLATE_DIR / "styles"
@@ -145,14 +159,24 @@ def normalize_filename(name: str) -> str:
     return normalized.strip("_")
 
 
+def _is_non_empty_txt(path: Path) -> bool:
+    """input 下的 txt 为空（或仅空白）则跳过不执行，返回 False。"""
+    try:
+        return bool(path.read_text(encoding="utf-8").strip())
+    except Exception:
+        return False
+
+
 def get_input_files_to_process() -> list[Path]:
     """
     返回当前应处理的 input 下的 txt 文件列表。
+    空文件（无内容或仅空白）会被跳过。
     若 RUN_SINGLE_FILE 已设置，则只返回与之匹配的一个文件（按文件名或 stem 匹配，可带或不带 .txt）。
     """
     if not INPUT_DIR.exists():
         return []
     files = sorted(INPUT_DIR.glob("*.txt"))
+    files = [p for p in files if _is_non_empty_txt(p)]
     if not RUN_SINGLE_FILE:
         return files
     needle = RUN_SINGLE_FILE.strip()

@@ -4,7 +4,7 @@
 import re
 import html
 import logging
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Any
 
 from src.utils.voice_role import parse_role_tag, normalize_role, strip_leading_role_prefix, NARRATION
 
@@ -712,3 +712,69 @@ def mark_vocabulary_in_text(text: str, vocabulary: List[Dict]) -> str:
         marked_text = re.sub(pattern, replacement, marked_text, flags=re.IGNORECASE)
     
     return marked_text
+
+
+def mark_paragraph_with_phrase_wrap(text: str, vocabulary: List[Dict]) -> str:
+    """
+    将段落中的核心词汇标记为「上音标、下中义」的 phrase-wrap 静态展示 HTML。
+    参考 template-txt2mp4 的展示方式：每个词为 .phrase-wrap，内部分别为 .pron-inline、.word-plain、.inline-cn。
+    非词汇部分做 HTML 转义后输出。
+
+    Args:
+        text: 原始段落英文
+        vocabulary: 词汇列表（需含 word, phonetic, current_meaning）
+
+    Returns:
+        带 phrase-wrap 的 HTML 字符串，可直接用 | safe 渲染
+    """
+    if not text:
+        return ""
+    # 按单词长度降序，优先匹配长词
+    sorted_vocab = sorted(vocabulary, key=lambda x: len(x.get("word", "")), reverse=True)
+    segments: List[Tuple[str, Any]] = []  # ('text', str) or ('vocab', vocab_dict, matched_str)
+    pos = 0
+    text_len = len(text)
+    while pos < text_len:
+        found = None
+        for v in sorted_vocab:
+            word = (v.get("word") or "").strip()
+            if not word:
+                continue
+            pattern = r"\b" + re.escape(word) + r"\b"
+            m = re.search(pattern, text[pos:], re.IGNORECASE)
+            if m:
+                start = pos + m.start()
+                end = pos + m.end()
+                found = (start, end, v, text[start:end])
+                break
+        if not found:
+            segments.append(("text", text[pos:]))
+            break
+        start, end, v, matched_str = found
+        if start > pos:
+            segments.append(("text", text[pos:start]))
+        segments.append(("vocab", v, matched_str))
+        pos = end
+    # 拼接：文本段转义，词汇段输出 phrase-wrap（带 data-vocab 时供前端悬浮显示 vocab-popover-global）
+    out = []
+    for seg in segments:
+        if seg[0] == "text":
+            out.append(escape_html(seg[1]))
+        else:
+            _, v, word_str = seg
+            # 无音标/中义时用不换行空格占位，满足站位显示
+            pron = (v.get("phonetic") or "").strip() or "\u00A0"
+            meaning = (v.get("current_meaning") or "").strip() or "\u00A0"
+            pron_esc = escape_html(pron)
+            word_esc = escape_html(word_str)
+            meaning_esc = escape_html(meaning)
+            data_vocab = v.get("data_vocab")
+            attr = f' data-vocab="{escape_html(data_vocab)}"' if data_vocab else ""
+            out.append(
+                f'<span class="phrase-wrap phrase-wrap-static"{attr}>'
+                f'<span class="pron-inline">{pron_esc}</span>'
+                f'<span class="word-plain">{word_esc}</span>'
+                f'<span class="inline-cn">{meaning_esc}</span>'
+                "</span>"
+            )
+    return "".join(out)

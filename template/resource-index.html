@@ -40,6 +40,7 @@
         <div class="main">
             <div class="tabs">
                 <div class="tab active" data-tab="mp4">播放页 HTML</div>
+                <div class="tab" data-tab="pic_v2">排版 HTML-V2</div>
                 <div class="tab" data-tab="pic">排版 HTML</div>
                 <div class="tab" data-tab="vocab">词汇 MD</div>
             </div>
@@ -55,6 +56,22 @@
                         <table><tbody>
                             {% for r in cat.resources %}
                             <tr><td>{% if r.vocab_url %}<a href="{{ r.vocab_url }}" target="_blank">{{ r.name }}</a>{% else %}<span class="na">—</span>{% endif %}</td><td class="file-time">{{ r.mtime_str or '' }}</td></tr>
+                            {% endfor %}
+                        </tbody></table>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="panel" id="panel-pic_v2">
+                    <div class="sub-tabs">
+                        {% for cat in categories %}
+                        <div class="sub-tab {% if loop.first %}active{% endif %}" data-category="{{ cat.id }}">{{ cat.label }}</div>
+                        {% endfor %}
+                    </div>
+                    {% for cat in categories %}
+                    <div class="sub-panel {% if loop.first %}active{% endif %}" data-panel="pic_v2" data-category="{{ cat.id }}">
+                        <table><tbody>
+                            {% for r in cat.resources %}
+                            <tr><td>{% if r.pic_v2_url %}<a href="{{ r.pic_v2_url }}" target="_blank">{{ r.name }}</a>{% else %}<span class="na">—</span>{% endif %}</td><td class="file-time">{{ r.mtime_str or '' }}</td></tr>
                             {% endfor %}
                         </tbody></table>
                     </div>

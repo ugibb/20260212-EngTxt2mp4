@@ -99,9 +99,10 @@ def _collect_resources() -> list[dict]:
             pic_candidates = [sanitized, stem, normalized] + _stem_variants_for_day(stem)
             mp4_candidates = [normalized, stem, sanitized] + _stem_variants_for_day(stem)
             pic_path = next((pic_files[k] for k in pic_candidates if k in pic_files), None)
+            pic_path_v2 = pic_files.get(sanitized + "_v2") or pic_files.get(normalized + "_v2")
             mp4_path = next((mp4_files[k] for k in mp4_candidates if k in mp4_files), None)
             mtime = 0.0
-            for p in (md_path, pic_path, mp4_path):
+            for p in (md_path, pic_path, pic_path_v2, mp4_path):
                 if p and p.exists():
                     try:
                         mtime = max(mtime, p.stat().st_mtime)
@@ -111,6 +112,7 @@ def _collect_resources() -> list[dict]:
                 "name": stem,
                 "vocab": md_path,
                 "pic_html": pic_path,
+                "pic_html_v2": pic_path_v2 if (pic_path_v2 and pic_path_v2.exists()) else None,
                 "mp4_html": mp4_path,
                 "mtime": mtime,
             })
@@ -141,6 +143,7 @@ def _prepare_template_data(resources: list[dict]) -> dict:
             "name": r["name"],
             "vocab_url": _to_resource_url(r["vocab"]) if r["vocab"] else None,
             "pic_url": _to_resource_url(r["pic_html"]) if r["pic_html"] else None,
+            "pic_v2_url": _to_resource_url(r["pic_html_v2"]) if r.get("pic_html_v2") else None,
             "mp4_url": _to_resource_url(r["mp4_html"]) if r["mp4_html"] else None,
             "mtime": mtime,
             "mtime_str": mtime_str,

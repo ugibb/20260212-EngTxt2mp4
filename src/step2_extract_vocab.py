@@ -187,17 +187,23 @@ def extract_vocabulary_from_file(input_file: Path) -> None:
 def main():
     """主函数"""
     ensure_dirs()
-    # logger.info("%s", SEP_LINE)
-    # logger.info("[Step2] 词汇提取（调用LLM提取词汇）")
-    # logger.info("%s", SEP_LINE)
+    # 使用当前 config 中的目录（run_all -a 逐日时 config 已 reload，此处确保用当日 02-vocabulary）
+    from src.utils.config import _01_TXT_DIR as _TXT_DIR, _02_VOCABULARY_DIR as _VOCAB_DIR
+    _01_TXT_DIR_current = _TXT_DIR
+    _02_VOCABULARY_DIR_current = _VOCAB_DIR
 
     # 根据 input 中的 txt 文件，找到对应的 output/01-txt/{文件名}.txt（避免按后缀排除产生误判）
     # 仅处理 output/02-vocabulary/{文件名}.md 不存在的文件，避免不必要的 LLM 调用费用
     txt_files = []
     for input_file in get_input_files_to_process():
         stem = sanitize_filename(input_file.stem)
-        txt_path = _01_TXT_DIR / f"{stem}.txt"
+        txt_path = _01_TXT_DIR_current / f"{stem}.txt"
+        # 先按 stem 查找已有 md；再按「与写入路径一致」的路径补检，避免命名/路径不一致导致重复调用 LLM
         existing_vocab = _find_existing_vocab(input_file.stem)
+        if not existing_vocab:
+            direct_md = _02_VOCABULARY_DIR_current / f"{stem}.md"
+            if direct_md.exists():
+                existing_vocab = direct_md
         if not txt_path.exists():
             logger.warning("⊙ 跳过（01-txt 中无对应文件）: %s -> %s", get_relative_path(input_file), get_relative_path(txt_path))
         elif existing_vocab:

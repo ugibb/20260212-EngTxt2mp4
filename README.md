@@ -8,6 +8,7 @@
 - **Step 2 词汇提取**：`step2_extract_vocab.py` 调用大模型提取核心词汇，保存至 `output/YYYYMMDD/02-vocabulary/{文件名}.md`
 - **Step 3 TTS**：`step3_generate_tts.py` 从 MD 段落结构生成 `_en.txt` 并生成 TTS；支持多角色语音（在 input 或 MD 中按段标记角色，按段合成后合并为单一 mp3+json），详见 `doc/TTS角色语音技术方案.md`
 - **Step 4 排版 HTML**：`step4_generate_pic_html.py` 根据模板生成排版 HTML，保存至 `output/YYYYMMDD/04-pic_html/{文件名}.html`
+- **Step 4.1 排版 HTML（v2）**：`step4_1_generate_pic_html.py` 使用 `template-txt2pic-v2.html`，正文采用「上音标、下中义」静态展示（参考 template-txt2mp4），无动效，输出为 `output/YYYYMMDD/04-pic_html/{文件名}_v2.html`
 - **Step 5 播放页 HTML**：`step5_generate_mp4_html.py` 根据 `template-txt2mp4.html` 生成 TTS 播放页，保存至 `output/YYYYMMDD/05-mp4_html/{文件名}.html`
 - **Step 6 录屏**：`step6_record_video.py` Playwright 全屏录屏，导出至 `output/YYYYMMDD/06-mp4/{文件名}.mp4`
 - **Step 7 资源页面**：`step7_generate_resource_page.py` 仅更新全局 `output/resources.html`，聚合所有日期资源，三标签展示词汇 MD、排版 HTML、播放页 HTML
@@ -121,6 +122,10 @@ python src/step7_generate_resource_page.py
 
 ## 更新记录
 
+### 2026-03-02
+
+- **template-txt2pic-v2**：文章区与词汇区之间增加可拖动分隔条，支持左右拖动调整宽度并持久化；分隔条顶端增加「隐藏/显示」按钮（▶ 隐藏、◀ 显示），样式与右侧「显示词汇栏」按钮统一；拖到最右（≥95%）可自动隐藏词汇栏；正文词块（音标/单词/中义）预留上下空间（padding-top/bottom 1.35em），避免相邻词块音标与释义重叠。
+
 ### 2026-02-28
 
 - **文档**：01-git.md 精简为三步流程（先更新 README、提交到 GitHub、禁止同步），并执行提交与推送。
@@ -165,3 +170,4 @@ python src/step7_generate_resource_page.py
 - [ ] 9、资料类型更新为文章类型，文章类型与资料名称不做直接关联，主要针对雅思高频内容，直接由LLM 根据文章内容来确定文章类型，主要由以下六类问这个类型：1️⃣ 教育 2️⃣ 科技 3️⃣ 环境 4️⃣ 社会 5️⃣ 经济 6️⃣ 文化
 - [ ] 10、新增MP32MP4功能，下载MP3 格式的音频文件，一键输出标准化后的雅思学习资料。
 - [ ] 11、词汇库本地化（参考百度翻译）
+- [ ] 12、要兼容中英文输入：{【】/[]},{,/，}，例如：[F]:I love Amelia Earhart.
